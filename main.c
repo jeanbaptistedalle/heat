@@ -4,6 +4,7 @@
 #define SIZE 5
 #define ITE 10000
 #define MAX_TEMP 100
+#define 
 #define NO_NEIGHBOR 0
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -16,7 +17,7 @@ int TAB(int x, int y){
 	return x + y*SIZE;
 }
 
-char *color(double val){
+char *color(float val){
 	if(val >= 4*MAX_TEMP/5){
 		return ANSI_COLOR_RED;
 	}else
@@ -32,11 +33,11 @@ char *color(double val){
 	return ANSI_COLOR_RESET;
 }
 
-void show(double *tab){
+void show(float *tab){
 	int i,j;
 	for(i = 0; i<SIZE;i++){
 		for(j = 0; j<SIZE;j++){
-			double val = tab[TAB(i,j)];
+			float val = tab[TAB(i,j)];
 			//printf("%so",color(val));
 			printf("%f\t",val);
 		}
@@ -46,50 +47,54 @@ void show(double *tab){
 	printf("\e[1;1H\e[2J");
 }
 
-void generate(double *tab, int x, int y){
-	int i,j;
+void generate(float *tab, int *heatPoints, int nbHeatPoints){
+	int i,j,k;
 	for(i = 0; i<SIZE;i++){
 		for(j = 0; j<SIZE;j++){
-			if(x == i && y == j){			
-				tab[TAB(i,j)] = MAX_TEMP;
-			}else{
-				tab[TAB(i,j)] = 0;
+			tab[TAB(i,j)] = 0;
+			for(k=0; k < nbHeatPoints; k++){
+				if(heatPoints[k] == TAB(i,j)){
+					tab[TAB(i,j)] = MAX_TEMP;
+				}
 			}
 		}
 	}
 }
 
-void calculNext(double *tab, double *next, double delta){
+void calculNext(float *tab, float *next, float delta){
 	int i,j;
 	for(i = 0; i<SIZE;i++){
 		for(j = 0; j<SIZE;j++){
-			double upside = (i == 0)?NO_NEIGHBOR:tab[TAB(i-1,j)];
-			double downside = (i == SIZE-1)?NO_NEIGHBOR:tab[TAB(i+1,j)];
-			double rightside = (j == 0)?NO_NEIGHBOR:tab[TAB(i,j-1)];
-			double leftside = (j == SIZE-1)?NO_NEIGHBOR:tab[TAB(i,j+1)];
+			float upside = (i == 0)?NO_NEIGHBOR:tab[TAB(i-1,j)];
+			float downside = (i == SIZE-1)?NO_NEIGHBOR:tab[TAB(i+1,j)];
+			float rightside = (j == 0)?NO_NEIGHBOR:tab[TAB(i,j-1)];
+			float leftside = (j == SIZE-1)?NO_NEIGHBOR:tab[TAB(i,j+1)];
 			next[TAB(i,j)] = tab[TAB(i,j)] + delta * (-4 * tab[TAB(i,j)]+upside+downside+rightside+leftside);
 		}
 	}
 }
 
 int main(){
-	double dt = 10.0e-7;  // dt = 5.0e-1;
-    	double d = 1.0/((double)SIZE-1.0) ;
+	float dt = 10.0e-7;  // dt = 5.0e-1;
+    	float d = 1.0/((float)SIZE-1.0) ;
 
-    	double delta = dt/pow(d,2.0) ;
-	double *tab = malloc(sizeof(double)*SIZE*SIZE);
-
-	int x = SIZE/2;
-	int y = SIZE/2;
-	generate(tab,x,y);	
+    	float delta = dt/pow(d,2.0) ;
+	float *tab = malloc(sizeof(float)*SIZE*SIZE);
+	
+	int nbHeatPoints = 2;
+	int *heatPoints = malloc(sizeof(float)*nbHeatPoints);
+	heatPoints[0] = TAB(2,1);
+	heatPoints[1] = TAB(2,3);
+	generate(tab,heatPoints, nbHeatPoints);	
 	int i;
-	for(i = 0; i<ITE;i++){
-		double *next = malloc(sizeof(double)*SIZE*SIZE);
+	//for(i = 0; i<ITE;i++){
+	while(1){
+		float *next = malloc(sizeof(float)*SIZE*SIZE);
 		calculNext(tab, next, delta);
 		show(next);
 		free(tab);
 		tab = next;
-		usleep(500000);
+		usleep(1000);
 	}
 	return 0;
 }
