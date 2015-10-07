@@ -134,9 +134,13 @@ void show(float *tab,char * file_name){
 		}
 		printf("\n");
 	}
-*/
+	printf("\n");
+	printf("\e[1;1H\e[2J");
 }
 
+/**
+ * Fonction permettant l'initialisation du plateau ainsi que des points chauds. Chaque points chaud est initialisé à MAX_TEMP alors que le reste est à TEMP_AMBIANT
+ */
 void generate(float *tab, int *heatPoints, int nbHeatPoints){
 	int i,j,k;
 	for(i = 0; i<WIDTH;i++){
