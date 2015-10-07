@@ -30,8 +30,8 @@ char* uint32_to_char_array(uint32_t value) {
 
 char* float_to_color(float value){
 	char * color = malloc(sizeof(char)*3);
-	uint8_t red = (value>(MAX_TEMP/2.0)) ? (value-(MAX_TEMP/2.0)) / (MAX_TEMP/2.0) * 255 : NO_NEIGHBOR;
-	uint8_t blue = (value<(MAX_TEMP/2.0)) ? ((MAX_TEMP/2.0)-value) / (MAX_TEMP/2.0) * 255 : NO_NEIGHBOR;
+	uint8_t red = (value>(MAX_TEMP/2.0)) ? (value-(MAX_TEMP/2.0)) / (MAX_TEMP/2.0) * 255 : 0;
+	uint8_t blue = (value<(MAX_TEMP/2.0)) ? ((MAX_TEMP/2.0)-value) / (MAX_TEMP/2.0) * 255 : 0;
 	uint8_t green = (value>=(MAX_TEMP/2.0)) ? (MAX_TEMP-value) / (MAX_TEMP/2.0) * 255 : value / (MAX_TEMP/2.0) * 255 ;
 	color[0] = blue;
 	color[1] = green;
@@ -139,7 +139,7 @@ void generate(float *tab, int *heatPoints, int nbHeatPoints){
 	int i,j,k;
 	for(i = 0; i<WIDTH;i++){
 		for(j = 0; j<HEIGHT;j++){
-			tab[TAB(i,j)] = NO_NEIGHBOR	;
+			tab[TAB(i,j)] = 0;
 			for(k=0; k < nbHeatPoints; k++){
 				if(heatPoints[k] == TAB(i,j)){
 					tab[TAB(i,j)] = MAX_TEMP;
@@ -151,7 +151,6 @@ void generate(float *tab, int *heatPoints, int nbHeatPoints){
 
 void calculNext(float *tab, float *next, float delta, int *heatPoints, int nbHeatPoints){
 	int i,j,k=0;
-	
 	for(i = 0; i<WIDTH;i++){
 		for(j = 0; j<HEIGHT;j++){
 			float upside = (i == 0)?NO_NEIGHBOR:tab[TAB(i-1,j)];
@@ -219,8 +218,7 @@ int main(){
 		float *next = malloc(sizeof(float)*WIDTH*HEIGHT);
 		//calculNext(tab, next, delta);
 		calculNext(tab, next, delta,heatPoints, nbHeatPoints);
-
-		if ((i % 60000) == 0) {
+		if ((i % 4000) == 0) {
 			sprintf(str, "%d.bmp", index++);
 			show(next,str);
 		}
