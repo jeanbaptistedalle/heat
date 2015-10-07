@@ -12,7 +12,7 @@ main.o: main.c
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	rm -rf *.o *.exe
+	rm -rf *.o
 
 mrproper: clean
-	rm -rf $(EXEC)
+	rm -rf *.o *.bmp $(EXEC)
