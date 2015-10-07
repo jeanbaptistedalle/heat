@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-g
-LDFLAGS=-lm
+CFLAGS=-g -O3
+LDFLAGS=-lm -O3
 EXEC=heat.exe
 
 all: $(EXEC)
@@ -12,7 +12,7 @@ main.o: main.c
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	rm -rf *.o
+	rm -rf *.o *.exe
 
 mrproper: clean
 	rm -rf $(EXEC)
