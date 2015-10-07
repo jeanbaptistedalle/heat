@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#define SIZE 5
+#define SIZE 1000
 #define ITE 10000
 #define MAX_TEMP 100
-#define 
-#define NO_NEIGHBOR 0
+#define NO_NEIGHBOR 25
+#define TEMP_AMBIANT NO_NEIGHBOR
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -17,22 +17,28 @@ int TAB(int x, int y){
 	return x + y*SIZE;
 }
 
+/**
+ * Fonction permettant de determiner la couleur d'un point à partir de sa température
+ */
 char *color(float val){
 	if(val >= 4*MAX_TEMP/5){
 		return ANSI_COLOR_RED;
 	}else
-	if(val >= 3*MAX_TEMP/5){
-		return ANSI_COLOR_YELLOW;
-	}else
-	if(val >= 2*MAX_TEMP/5){
-		return ANSI_COLOR_GREEN;
-	}else
-	if(val >= 1*MAX_TEMP/5){
-		return ANSI_COLOR_BLUE;
-	}
+		if(val >= 3*MAX_TEMP/5){
+			return ANSI_COLOR_YELLOW;
+		}else
+			if(val >= 2*MAX_TEMP/5){
+				return ANSI_COLOR_GREEN;
+			}else
+				if(val >= 1*MAX_TEMP/5){
+					return ANSI_COLOR_BLUE;
+				}
 	return ANSI_COLOR_RESET;
 }
 
+/**
+ * Fonction permettant l'affichage en terminal du plateau, chaque "pixel" étant représenté par sa temperature actuelle
+ */
 void show(float *tab){
 	int i,j;
 	for(i = 0; i<SIZE;i++){
@@ -47,11 +53,14 @@ void show(float *tab){
 	printf("\e[1;1H\e[2J");
 }
 
+/**
+ * Fonction permettant l'initialisation du plateau ainsi que des points chauds. Chaque points chaud est initialisé à MAX_TEMP alors que le reste est à TEMP_AMBIANT
+ */
 void generate(float *tab, int *heatPoints, int nbHeatPoints){
 	int i,j,k;
 	for(i = 0; i<SIZE;i++){
 		for(j = 0; j<SIZE;j++){
-			tab[TAB(i,j)] = 0;
+			tab[TAB(i,j)] = TEMP_AMBIANT;
 			for(k=0; k < nbHeatPoints; k++){
 				if(heatPoints[k] == TAB(i,j)){
 					tab[TAB(i,j)] = MAX_TEMP;
@@ -61,6 +70,9 @@ void generate(float *tab, int *heatPoints, int nbHeatPoints){
 	}
 }
 
+/**
+ * Fonction permettant le calcul du plateau suivant à partir du plateau actuel. La variation de delta permet de rendre l'animation plus ou moins rapide
+ */
 void calculNext(float *tab, float *next, float delta){
 	int i,j;
 	for(i = 0; i<SIZE;i++){
@@ -74,21 +86,23 @@ void calculNext(float *tab, float *next, float delta){
 	}
 }
 
-int main(){
-	float dt = 10.0e-7;  // dt = 5.0e-1;
-    	float d = 1.0/((float)SIZE-1.0) ;
+/**
+ * Programme principal
+ */
+void heat(){
+	float dt = 10.0e-6;  // dt = 5.0e-1;
+	float d = 1.0/((float)SIZE-1.0) ;
+	float delta = dt/pow(d,2.0) ;
 
-    	float delta = dt/pow(d,2.0) ;
 	float *tab = malloc(sizeof(float)*SIZE*SIZE);
-	
+
 	int nbHeatPoints = 2;
 	int *heatPoints = malloc(sizeof(float)*nbHeatPoints);
 	heatPoints[0] = TAB(2,1);
 	heatPoints[1] = TAB(2,3);
 	generate(tab,heatPoints, nbHeatPoints);	
 	int i;
-	//for(i = 0; i<ITE;i++){
-	while(1){
+	for(i = 0; i<ITE;i++){
 		float *next = malloc(sizeof(float)*SIZE*SIZE);
 		calculNext(tab, next, delta);
 		show(next);
@@ -96,5 +110,9 @@ int main(){
 		tab = next;
 		usleep(1000);
 	}
+}
+
+int main(int argc, char **argv){
+	heat();
 	return 0;
 }
