@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-g -O3
-LDFLAGS=-lm -O3
+CFLAGS= -g -O3 -fopenmp
+LDFLAGS= -g -lm -O3 -fopenmp
 EXEC=heat.exe
 
 all: $(EXEC)
