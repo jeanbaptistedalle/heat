@@ -5,15 +5,10 @@
 #include <getopt.h>
 #include <stdint.h>
 #define SIZE 5
+//#define ITE 240000
 #define ITE 10000
 #define MAX_TEMP 100.0
-#define NO_NEIGHBOR 0.0
-
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_RESET   "\x1b[0m"
+#define NO_NEIGHBOR 20.0
 
 typedef struct {
 	float* map;
@@ -31,11 +26,25 @@ char* uint32_to_char_array(uint32_t value) {
 	return res;
 }
 
+matrice buildMatrice(uint32_t width,uint32_t height) {
+	matrice mat;
+	mat.width=width;
+	mat.height=height;
+	mat.map = malloc(sizeof(float)*width*height);
+	return mat;
+}
+
 char* float_to_color(float value){
 	char * color = malloc(sizeof(char)*3);
-	uint8_t red = (value>(MAX_TEMP/2.0)) ? (value-(MAX_TEMP/2.0)) / (MAX_TEMP/2.0) * 255 : 0;
-	uint8_t blue = (value<(MAX_TEMP/2.0)) ? ((MAX_TEMP/2.0)-value) / (MAX_TEMP/2.0) * 255 : 0;
-	uint8_t green = (value>=(MAX_TEMP/2.0)) ? (MAX_TEMP-value) / (MAX_TEMP/2.0) * 255 : value / (MAX_TEMP/2.0) * 255 ;
+
+	uint8_t red = (value > MAX_TEMP*0.75) ? 255 : (value < MAX_TEMP*0.5) ? 0 : 4*(value-0.5) / MAX_TEMP * 255 ;
+	uint8_t blue = (value < MAX_TEMP*0.25) ? 255 : (value > MAX_TEMP*0.5) ? 0 : (-value+0.5) / MAX_TEMP * 255 ;
+	uint8_t green = (value > MAX_TEMP*0.75) ? 
+						( (MAX_TEMP - value) / MAX_TEMP ) * 255 :
+						(value < MAX_TEMP*0.25) ?
+							( (value*4)/MAX_TEMP * 255 ) :
+							255;
+
 	color[0] = blue;
 	color[1] = green;
 	color[2] = red;
@@ -52,13 +61,6 @@ void build(matrice tab,char *file_name) {
 	char * h = uint32_to_char_array(tab.height);
 	char * header1_size = uint32_to_char_array(tab.height*tab.width*3);
 	char * header2_size = uint32_to_char_array(tab.height*tab.width*3+54);
-
-/*
-	printf("%d %hhx %hhx %hhx %hhx\n",WIDTH,w[0],w[1],w[2],w[3]);
-	printf("%d %hhx %hhx %hhx %hhx\n",HEIGHT,h[0],h[1],h[2],h[3]);
-	printf("%d %hhx %hhx %hhx %hhx\n",HEIGHT*WIDTH*3,header1_size[0],header1_size[1],header1_size[2],header1_size[3]);
-	printf("%d %hhx %hhx %hhx %hhx\n",HEIGHT*WIDTH*3+54,header2_size[0],header2_size[1],header2_size[2],header2_size[3]);
-*/
 
 	char header1[2] = { 0x42 ,0x4d };
 
@@ -88,33 +90,12 @@ void build(matrice tab,char *file_name) {
 			fwrite(rgb,sizeof(char),sizeof(char)*3,fichier);
 		}
 	  	fclose(fichier);
+		printf("%s printed\n",file_name);
 	}
 }
 
 int TAB(int x, int y , int width){
 	return x + y*width;
-}
-
-char *color(float val){
-	if(val >= 4*MAX_TEMP/5){
-		return ANSI_COLOR_RED;
-	}else
-	if(val >= 3*MAX_TEMP/5){
-		return ANSI_COLOR_YELLOW;
-	}else
-	if(val >= 2*MAX_TEMP/5){
-		return ANSI_COLOR_GREEN;
-	}else
-	if(val >= 1*MAX_TEMP/5){
-		return ANSI_COLOR_BLUE;
-	}
-	return ANSI_COLOR_RESET;
-}
-
-void show(matrice tab,char * file_name){
-
-	build(tab,file_name);
-	printf("%s printed\n",file_name);
 }
 
 /**
@@ -149,7 +130,6 @@ void calculNext(matrice tab, matrice next, float delta, int *heatPoints, int nbH
 	putHotPoints(tab);
 	#pragma omp parallel for
 	for(i = 0; i<tab.width;i++){
-		#pragma omp parallel for
 		for(j = 0; j<tab.height;j++){
 			float upside = (i == 0)?NO_NEIGHBOR:tab.map[TAB(i-1,j,tab.width)];
 			float downside = (i == tab.width-1)?NO_NEIGHBOR:tab.map[TAB(i+1,j,tab.width)];
@@ -162,12 +142,11 @@ void calculNext(matrice tab, matrice next, float delta, int *heatPoints, int nbH
 }
 
 int main(int argc , char *argv[]){
-	matrice tab;
 
 	unsigned int width=600;
 	unsigned int height=400;
 	/* Attention si valeur trop basse ca pète */
-	float dt = 10.0e-3 ;  // dt = 5.0e-1;
+	float dt = 10.0e-5 ;  // dt = 5.0e-1;
 
 	int option = 0;
     while ( (option=getopt(argc, argv,"w:h:t:")) != -1 ) {
@@ -179,27 +158,18 @@ int main(int argc , char *argv[]){
 				height = atoi(optarg);
 				break;
 			case 't' :
-				if ( (dt = atof(optarg)) > 10.0e-3 ) {
+				if ( (dt = atof(optarg)) > 10.0e-3 )
 					dt = 10.0e-3;
-				}
-				printf ("%f\n",dt);
-				;
 				break;
 			default:
 				printf("bad args: \n\t-w %%d+\n\t-h %%d\n\t-t float < 10.0e-3 && > 10.0e-0\n");
 				return 1;
         }
     }
-	tab.width=width;
-	tab.height=height;
-	tab.map = malloc(sizeof(float)*width*height);
 
-	char str[15];
-	srand(time(NULL));
-	int picture_index = 0, index = 0;
+	matrice tab = buildMatrice(width,height);
 
    	float d = 1.0/((float)SIZE-1.0) ;
-
    	float delta = dt/pow(d,2.0) ;
 
 	int nbHeatPoints = 1;
@@ -207,22 +177,23 @@ int main(int argc , char *argv[]){
 
 	generate(tab,heatPoints, nbHeatPoints);	
 
-	matrice next;
-	next.width=tab.width;
-	next.height=tab.height;
-	next.map = malloc(sizeof(float)*width*height);
+	matrice next = buildMatrice(width,height);
+
+	char str[15];
+	int index = 0;
 
 	int i=0;
-	for(i = 0; ;i++){
+	for(i = 0; i < ITE ;i++){
 		calculNext(tab, next, delta,heatPoints, nbHeatPoints);
-		if ((i % 10000) == 0) {
+		if ((i % 4000) == 0) {
 			sprintf(str, "%d.bmp", index++);
-			show(next,str);
+			build(next,str);
 		}
+		if (i==0) 
+			free(tab.map);
 		tab = next;
 	}
 	free(tab.map);
-	free(next.map);
 
 	return 0;
 }
