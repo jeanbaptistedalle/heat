@@ -6,14 +6,14 @@
 #include <stdint.h>
 #define SIZE 5
 //#define ITE 240000
-#define ITE 10000
+#define ITE 1000000
 #define MAX_TEMP 100.0
 #define NO_NEIGHBOR 20.0
 
 typedef struct {
 	float* map;
-	unsigned width;
-	unsigned height; 
+	uint32_t width;
+	uint32_t height; 
 } matrice;
 
 char* uint32_to_char_array(uint32_t value) {
@@ -106,7 +106,7 @@ void generate(matrice tab, int *heatPoints, int nbHeatPoints){
 	int i,j,k;
 	for(i = 0; i<tab.width;i++){
 		for(j = 0; j<tab.height;j++){
-			tab.map[TAB(i,j,tab.width)] = 0;
+			tab.map[TAB(i,j,tab.width)] = NO_NEIGHBOR;
 		}
 	}
 }
@@ -128,9 +128,10 @@ void putHotPoints(matrice next) {
 void calculNext(matrice tab, matrice next, float delta, int *heatPoints, int nbHeatPoints){
 	int i,j,k=0;
 	putHotPoints(tab);
-	#pragma omp parallel for
+   	#pragma omp parallel for
 	for(i = 0; i<tab.width;i++){
 		for(j = 0; j<tab.height;j++){
+
 			float upside = (i == 0)?NO_NEIGHBOR:tab.map[TAB(i-1,j,tab.width)];
 			float downside = (i == tab.width-1)?NO_NEIGHBOR:tab.map[TAB(i+1,j,tab.width)];
 			float rightside = (j == 0)?NO_NEIGHBOR:tab.map[TAB(i,j-1,tab.width)];
@@ -149,7 +150,7 @@ int main(int argc , char *argv[]){
 	float dt = 10.0e-5 ;  // dt = 5.0e-1;
 
 	int option = 0;
-    while ( (option=getopt(argc, argv,"w:h:t:")) != -1 ) {
+    while ( (option=getopt(argc, argv,"w:h:t:-help:")) != -1 ) {
         switch (option) {
             case 'w' :
 				width = atoi(optarg);
@@ -161,7 +162,7 @@ int main(int argc , char *argv[]){
 				if ( (dt = atof(optarg)) > 10.0e-3 )
 					dt = 10.0e-3;
 				break;
-			default:
+			default :
 				printf("bad args: \n\t-w %%d+\n\t-h %%d\n\t-t float < 10.0e-3 && > 10.0e-0\n");
 				return 1;
         }
