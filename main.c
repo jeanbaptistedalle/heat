@@ -12,8 +12,8 @@
 
 typedef struct {
 	float* map;
-	uint32_t width;
-	uint32_t height; 
+	unsigned width;
+	unsigned height;
 } matrice;
 
 char* uint32_to_char_array(uint32_t value) {
