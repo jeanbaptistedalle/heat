@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS= -g
+CFLAGS= -g -std=c99
 LDFLAGS= -g -lm
 EXEC=heat.exe
 EXEC_OP=heat_openmp.exe
