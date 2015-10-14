@@ -6,7 +6,7 @@
 #include <stdint.h>
 #define SIZE 5
 //#define ITE 240000
-#define ITE 10000
+#define ITE 1000000
 #define MAX_TEMP 100.0
 #define NO_NEIGHBOR 20.0
 
@@ -96,10 +96,10 @@ int TAB(int x, int y, int width) {
  */
 //void generate(float *tab, int *heatPoints, int nbHeatPoints){
 void generate(matrice tab, int *heatPoints, int nbHeatPoints) {
-	int i, j;
+	int i, j, k;
 	for (i = 0; i < tab.width; i++) {
 		for (j = 0; j < tab.height; j++) {
-			tab.map[TAB(i, j, tab.width)] = 0;
+			tab.map[TAB(i, j, tab.width)] = NO_NEIGHBOR;
 		}
 	}
 }
@@ -119,7 +119,7 @@ void putHotPoints(matrice next) {
 }
 
 void calculNext(matrice tab, matrice next, float delta, int *heatPoints, int nbHeatPoints) {
-	int i, j = 0;
+	int i, j;
 	putHotPoints(tab);
 #pragma omp parallel for
 	for (i = 0; i < tab.width; i++) {
@@ -127,7 +127,7 @@ void calculNext(matrice tab, matrice next, float delta, int *heatPoints, int nbH
 			float upside = (i == 0) ? NO_NEIGHBOR : tab.map[TAB(i - 1, j, tab.width)];
 			float downside = (i == tab.width - 1) ? NO_NEIGHBOR : tab.map[TAB(i + 1, j, tab.width)];
 			float rightside = (j == 0) ? NO_NEIGHBOR : tab.map[TAB(i, j - 1, tab.width)];
-			float leftside = (j == 400 - 1) ? NO_NEIGHBOR : tab.map[TAB(i, j + 1, 600)];
+			float leftside = (j == tab.height - 1) ? NO_NEIGHBOR : tab.map[TAB(i, j + 1, tab.width)];
 
 			next.map[TAB(i, j, next.width)] = tab.map[TAB(i, j, tab.width)]
 					+ delta * (-4 * tab.map[TAB(i, j, tab.width)] + upside + downside + rightside + leftside);
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
 	float dt = 10.0e-5;  // dt = 5.0e-1;
 
 	int option = 0;
-	while ((option = getopt(argc, argv, "w:h:t:")) != -1) {
+	while ((option = getopt(argc, argv, "w:h:t:-help:")) != -1) {
 		switch (option) {
 		case 'w':
 			width = atoi(optarg);
@@ -197,3 +197,4 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
+
