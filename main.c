@@ -37,15 +37,10 @@ matrice buildMatrice(uint32_t width, uint32_t height) {
 char* float_to_color(float value) {
 	char * color = malloc(sizeof(char) * 3);
 
-	uint8_t red =
-			(value > MAX_TEMP * 0.75) ? 255 :
-			(value < MAX_TEMP * 0.5) ? 0 : 4 * (value - 0.5) / MAX_TEMP * 255;
-	uint8_t blue =
-			(value < MAX_TEMP * 0.25) ? 255 :
-			(value > MAX_TEMP * 0.5) ? 0 : (-value + 0.5) / MAX_TEMP * 255;
-	uint8_t green =
-			(value > MAX_TEMP * 0.75) ? ((MAX_TEMP - value) / MAX_TEMP) * 255 :
-			(value < MAX_TEMP * 0.25) ? ((value * 4) / MAX_TEMP * 255) : 255;
+	uint8_t red = (value > MAX_TEMP * 0.75) ? 255 : (value < MAX_TEMP * 0.5) ? 0 : 4 * (value - 0.5) / MAX_TEMP * 255;
+	uint8_t blue = (value < MAX_TEMP * 0.25) ? 255 : (value > MAX_TEMP * 0.5) ? 0 : (-value + 0.5) / MAX_TEMP * 255;
+	uint8_t green = (value > MAX_TEMP * 0.75) ? ((MAX_TEMP - value) / MAX_TEMP) * 255 :
+					(value < MAX_TEMP * 0.25) ? ((value * 4) / MAX_TEMP * 255) : 255;
 
 	color[0] = blue;
 	color[1] = green;
@@ -66,13 +61,11 @@ void build(matrice tab, char *file_name) {
 
 	char header1[2] = { 0x42, 0x4d };
 
-	char header2[12] = { 0x00, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28,
-			0x00, 0x00, 0x00 };
+	char header2[12] = { 0x00, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00 };
 
 	char header3[8] = { 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-	char header4[16] = { 0xc4, 0x0e, 0x00, 0x00, 0xc4, 0x0e, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	char header4[16] = { 0xc4, 0x0e, 0x00, 0x00, 0xc4, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	if (fichier != NULL ) {
 		fwrite(header1, sizeof(char), sizeof(header1), fichier);
@@ -125,28 +118,19 @@ void putHotPoints(matrice next) {
 	}
 }
 
-void calculNext(matrice tab, matrice next, float delta, int *heatPoints,
-		int nbHeatPoints) {
+void calculNext(matrice tab, matrice next, float delta, int *heatPoints, int nbHeatPoints) {
 	int i, j = 0;
 	putHotPoints(tab);
 #pragma omp parallel for
 	for (i = 0; i < tab.width; i++) {
 		for (j = 0; j < tab.height; j++) {
-			float upside =
-					(i == 0) ? NO_NEIGHBOR : tab.map[TAB(i - 1, j, tab.width)];
-			float downside =
-					(i == tab.width - 1) ?
-							NO_NEIGHBOR : tab.map[TAB(i + 1, j, tab.width)];
-			float rightside =
-					(j == 0) ? NO_NEIGHBOR : tab.map[TAB(i, j - 1, tab.width)];
-			float leftside =
-					(j == tab.height - 1) ?
-							NO_NEIGHBOR : tab.map[TAB(i, j + 1, tab.width)];
+			float upside = (i == 0) ? NO_NEIGHBOR : tab.map[TAB(i - 1, j, tab.width)];
+			float downside = (i == tab.width - 1) ? NO_NEIGHBOR : tab.map[TAB(i + 1, j, tab.width)];
+			float rightside = (j == 0) ? NO_NEIGHBOR : tab.map[TAB(i, j - 1, tab.width)];
+			float leftside = (j == 400 - 1) ? NO_NEIGHBOR : tab.map[TAB(i, j + 1, 600)];
 
 			next.map[TAB(i, j, next.width)] = tab.map[TAB(i, j, tab.width)]
-					+ delta
-							* (-4 * tab.map[TAB(i, j, tab.width)] + upside
-									+ downside + rightside + leftside);
+					+ delta * (-4 * tab.map[TAB(i, j, tab.width)] + upside + downside + rightside + leftside);
 		}
 	}
 }
@@ -163,17 +147,22 @@ int main(int argc, char *argv[]) {
 		switch (option) {
 		case 'w':
 			width = atoi(optarg);
+			while (width % 8 != 0) {
+				width++;
+			}
 			break;
 		case 'h':
 			height = atoi(optarg);
+			while (height % 8 != 0) {
+				height++;
+			}
 			break;
 		case 't':
 			if ((dt = atof(optarg)) > 10.0e-3)
 				dt = 10.0e-3;
 			break;
 		default:
-			printf(
-					"bad args: \n\t-w %%d+\n\t-h %%d\n\t-t float < 10.0e-3 && > 10.0e-0\n");
+			printf("bad args: \n\t-w %%d+\n\t-h %%d\n\t-t float < 10.0e-3 && > 10.0e-0\n");
 			return 1;
 		}
 	}
@@ -194,7 +183,7 @@ int main(int argc, char *argv[]) {
 	int index = 0;
 
 	int i = 0;
-	for (i = 0; i < ITE; i++) {
+	for (i = 0;; i++) {
 		calculNext(tab, next, delta, heatPoints, nbHeatPoints);
 		if ((i % 4000) == 0) {
 			sprintf(str, "%d.bmp", index++);

@@ -20,10 +20,10 @@ main_openmp.o: main.c
 	$(CC) -o $@ -c $< $(CFLAGS) -fopenmp
 	
 heat_mpi.exe: main_mpi.o
-	mpicc -o $@ $^ $(LDFLAGS) -fopenmp
+	mpicc -o $@ $^ $(LDFLAGS)
 	
 main_mpi.o: main_mpi.c
-	mpicc -o $@ -c $< $(CFLAGS) -fopenmp
+	mpicc -o $@ -c $< $(CFLAGS)
 
 clean:
 	rm -rf *.o

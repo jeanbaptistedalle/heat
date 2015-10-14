@@ -30,11 +30,11 @@ char* uint32_to_char_array(uint32_t value) {
 	return res;
 }
 
-matrice buildMatrice(uint32_t width, uint32_t height) {
+matrice buildMatrice(uint32_t width, uint32_t height, int bourrage) {
 	matrice mat;
 	mat.width = width;
 	mat.height = height;
-	mat.map = malloc(sizeof(float) * width * height);
+	mat.map = malloc(sizeof(float) * (width * height + bourrage));
 	return mat;
 }
 
@@ -122,9 +122,9 @@ void putHotPoints(matrice next) {
 }
 
 void calculNext(matrice tab, matrice next, float delta, int *heatPoints, int nbHeatPoints, int debut, int fin) {
-	int i= 0;
+	int i = 0;
 	putHotPoints(tab);
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (i = debut; i < fin; i++) {
 //		printf("%d < %d < %d\n", debut, i, fin);
 		float upside = ((i - tab.width) < 0) ? NO_NEIGHBOR : tab.map[i - tab.width];
@@ -160,9 +160,15 @@ int main(int argc, char *argv[]) {
 		switch (option) {
 		case 'w':
 			width = atoi(optarg);
+			while (width % 8 != 0) {
+				width++;
+			}
 			break;
 		case 'h':
 			height = atoi(optarg);
+			while (height % 8 != 0) {
+				height++;
+			}
 			break;
 		case 't':
 			if ((dt = atof(optarg)) > 10.0e-3)
@@ -180,22 +186,25 @@ int main(int argc, char *argv[]) {
 	int nbHeatPoints = 1;
 	int *heatPoints = malloc(sizeof(float) * nbHeatPoints);
 
-	matrice tab = buildMatrice(width, height);
+	int bourrage = mpi_nb - ((width * height) % mpi_nb);
+	int size = width * height + bourrage;
+	int sizeOfPart = size / mpi_nb;
+
+	matrice tab = buildMatrice(width, height, bourrage);
 	generate(tab);
 
-	matrice next = buildMatrice(width, height);
+	matrice next = buildMatrice(width, height, bourrage);
 	generate(next);
 
 	char str[15];
 	int index = 0;
-	int size = tab.width * tab.height;
-	int sizeOfPart = size / mpi_nb;
 	int i = 0;
 	//A chaque tour de boucle, chaque processus calcule un morceau de tableau
 	for (i = 0;; i++) {
-		//on selectionne le morceau à calculer, de mpi_rang*sizeOfPart à (mpi_rang+1)*sizeOfPart -1
+		//on selectionne le morceau à calculer, de mpi_rang*sizeOfPart à (mpi_rang+1)*sizeOfPart
 		int debut = mpi_rang * sizeOfPart;
-		int fin = (mpi_rang + 1) * sizeOfPart;
+		int fin;
+		fin = (mpi_rang + 1) * sizeOfPart;
 		calculNext(tab, next, delta, heatPoints, nbHeatPoints, debut, fin);
 		//puis, on recrée le tableau. Avec allgather, chacun récupère le tableau et est donc prêt à calculer la suite
 		MPI_Allgather(&next.map[debut], sizeOfPart, MPI_FLOAT, tab.map, sizeOfPart, MPI_FLOAT, MPI_COMM_WORLD);
