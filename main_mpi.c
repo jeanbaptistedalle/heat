@@ -126,16 +126,11 @@ void calculNext(matrice tab, matrice next, float delta, int *heatPoints, int nbH
 	putHotPoints(tab);
 #pragma omp parallel for
 	for (i = debut; i < fin; i++) {
-//		printf("%d < %d < %d\n", debut, i, fin);
 		float upside = ((i - tab.width) < 0) ? NO_NEIGHBOR : tab.map[i - tab.width];
 		float downside = (i + tab.width > tab.width * tab.height - 1) ? NO_NEIGHBOR : tab.map[i + tab.width];
 		//Si on est au bord du tableau d'un côté ou de l'autre, on renvoie NO_NEIGHBOR
 		float leftside = (i % tab.width == 0) ? NO_NEIGHBOR : tab.map[i - 1];
 		float rightside = (i % tab.width == tab.width - 1) ? NO_NEIGHBOR : tab.map[i + 1];
-//		float e = 10.0e-5;
-//		if(upside>e || downside>e || rightside>e || leftside>e){
-//			printf("%f %f %f %f\n",upside, downside, rightside, leftside);
-//		}
 		float temp = tab.map[i] + delta * (-4 * tab.map[i] + upside + downside + rightside + leftside);
 		next.map[i] = temp;
 	}
@@ -152,7 +147,6 @@ int main(int argc, char *argv[]) {
 
 	unsigned int width = 600;
 	unsigned int height = 400;
-	/* Attention si valeur trop basse ca pète */
 	float dt = 10.0e-5;  // dt = 5.0e-1;
 
 	int option = 0;
