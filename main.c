@@ -25,11 +25,23 @@ char* uint32_to_char_array(uint32_t value) {
 	return res;
 }
 
+uint32_t char_array_to_uint32(char * value) {
+	return *(uint32_t *)value;
+}
+
 matrice buildMatrice(uint32_t width,uint32_t height) {
 	matrice mat;
 	mat.width=width;
 	mat.height=height;
 	mat.map = malloc(sizeof(float)*width*height);
+	return mat;
+}
+
+matrice buildMatriceWithData(uint32_t width,uint32_t height, float * data) {
+	matrice mat;
+	mat.width=width;
+	mat.height=height;
+	mat.map = data;
 	return mat;
 }
 
@@ -93,48 +105,146 @@ void build(matrice tab,char *file_name) {
 	}
 }
 
+uint8_t fromBinary(char s) {
+  return *( ( uint8_t * )&s );
+}
+
+matrice readImage(char * filename) {
+	FILE *fp;
+	fp = fopen(filename,"r+");
+	float * data;
+	uint32_t w ,h;
+	int data_size;
+	matrice mat;
+	if (fp != NULL) {
+		fseek(fp, 2, SEEK_SET);
+		char size[4];
+		fread(&size,1,4,fp);
+		char width[4];
+		fseek(fp,18,SEEK_SET);
+		fread(&width,1,4,fp);
+		w=char_array_to_uint32(width);
+		char height[4];
+		fseek(fp,22,SEEK_SET);
+		fread(&height,1,4,fp);
+		h=char_array_to_uint32(height);
+		fseek(fp,54,SEEK_SET);
+
+		data_size = char_array_to_uint32(size);
+
+		char * data_picture = malloc(data_size);
+
+		fread(data_picture,1,data_size,fp);
+		data = malloc(sizeof(float)*(data_size/3));
+		for (int i=0;i<data_size;i+=3){
+			if (fromBinary(data_picture[i+2])>=250)
+				data[i/3]=MAX_TEMP;
+		}
+	
+		fclose(fp);
+	}
+	return buildMatriceWithData(w,h,data);
+}
+
 int TAB(int x, int y, uint32_t width) {
 	return x + y * width;
+}
+
+void putHotPoints(matrice next) {
+	int i,j;
+	for(i = (next.width/6); i<(next.width/6)+10;i++){
+		for(j = (next.height/5); j<(next.height/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+	for(i = (next.width*2/6); i<(next.width*2/6)+10;i++){
+		for(j = (next.height/5); j<(next.height/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+
+	for(i = (next.width*3/6); i<(next.width*3/6)+10;i++){
+		for(j = (next.height/5); j<(next.height/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+	for(i = (next.width*4/6); i<(next.width*3/6)+10;i++){
+		for(j = (next.height/5); j<(next.height/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+	for(i = (next.width*4/6); i<(next.width*4/6)+10;i++){
+		for(j = (next.height/5); j<(next.height/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+	for(i = (next.width*5/6); i<(next.width*5/6)+10;i++){
+		for(j = (next.height/5); j<(next.height/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+
+	for(i = (next.width/6); i<(next.width/6)+10;i++){
+		for(j = (next.height*4/5); j<(next.height*4/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+	for(i = (next.width*2/6); i<(next.width*2/6)+10;i++){
+		for(j = (next.height*4/5); j<(next.height*4/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+
+	for(i = (next.width*3/6); i<(next.width*3/6)+10;i++){
+		for(j = (next.height*4/5); j<(next.height*4/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+	for(i = (next.width*4/6); i<(next.width*3/6)+10;i++){
+		for(j = (next.height*4/5); j<(next.height*4/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+	for(i = (next.width*4/6); i<(next.width*4/6)+10;i++){
+		for(j = (next.height*4/5); j<(next.height*4/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
+	for(i = (next.width*5/6); i<(next.width*5/6)+10;i++){
+		for(j = (next.height*4/5); j<(next.height*4/5)+10;j++){
+			next.map[TAB(i,j,next.width)] = MAX_TEMP;
+		}
+	}
 }
 
 /**
  * Fonction permettant l'initialisation du plateau ainsi que des points chauds. Chaque points chaud est initialisé à MAX_TEMP alors que le reste est à TEMP_AMBIANT
  */
-void generate(matrice tab, int *heatPoints, int nbHeatPoints) {
+void generate(matrice tab) {
 	int i, j;
 	for (i = 0; i < tab.width; i++) {
 		for (j = 0; j < tab.height; j++) {
 			tab.map[TAB(i, j, tab.width)] = NO_NEIGHBOR;
 		}
 	}
-}
-
-void putHotPoints(matrice next) {
-	int i,j;
-	for(i = (next.width/3); i<(next.width/3)+10;i++){
-		for(j = (next.height/2); j<(next.height/2)+10;j++){
-			next.map[TAB(i,j,next.width)] = MAX_TEMP;
-		}
-	}
-	for(i = (next.width*2/3); i<(next.width*2/3)+10;i++){
-		for(j = (next.height/2); j<(next.height/2)+10;j++){
-			next.map[TAB(i,j,next.width)] = MAX_TEMP;
-		}
-	}
+	putHotPoints(tab);
 }
 
 void calculNext(matrice tab, matrice next, float delta, int *heatPoints,
 		int nbHeatPoints) {
-	putHotPoints(tab);
 	#pragma omp parallel for
 	for (int i = 0; i < tab.width; i++) {
 		for (int j = 0; j < tab.height; j++) {
-			float upside = (i == 0) ? NO_NEIGHBOR : tab.map[TAB(i - 1, j, tab.width)];
-			float downside = (i == tab.width - 1) ? NO_NEIGHBOR : tab.map[TAB(i + 1, j, tab.width)];
-			float rightside = (j == 0) ? NO_NEIGHBOR : tab.map[TAB(i, j - 1, tab.width)];
-			float leftside = (j == tab.height - 1) ? NO_NEIGHBOR : tab.map[TAB(i, j + 1, tab.width)];
-
-			next.map[TAB(i, j, next.width)] = tab.map[TAB(i, j, tab.width)]	+ delta	* (-4 * tab.map[TAB(i, j, tab.width)] + upside + downside + rightside + leftside);
+			if (tab.map[TAB(i,j,tab.width)]> 0.999*MAX_TEMP)
+				next.map[TAB(i, j, next.width)]=tab.map[TAB(i,j,tab.width)];
+			else {
+				float upside = (i == 0) ? NO_NEIGHBOR : tab.map[TAB(i - 1, j, tab.width)];
+				float downside = (i == tab.width - 1) ? NO_NEIGHBOR : tab.map[TAB(i + 1, j, tab.width)];
+				float rightside = (j == 0) ? NO_NEIGHBOR : tab.map[TAB(i, j - 1, tab.width)];
+				float leftside = (j == tab.height - 1) ? NO_NEIGHBOR : tab.map[TAB(i, j + 1, tab.width)];
+	
+				next.map[TAB(i, j, next.width)] = tab.map[TAB(i, j, tab.width)]	+ delta	* (-4 * tab.map[TAB(i, j, tab.width)] + upside + downside + rightside + leftside);
+			}
 		}
 	}
 }
@@ -145,15 +255,21 @@ int main(int argc , char *argv[]){
 	unsigned int height=400;
 	/* Attention si valeur trop basse ca pète */
 	float dt = 10.0e-3;  // dt = 5.0e-1;
+	char * filename;
+	int image_in =0;
 
 	int option = 0;
-    while ( (option=getopt(argc, argv,"w:h:t:-help:")) != -1 ) {
+    while ( (option=getopt(argc, argv,"w:h:t:i:")) != -1 ) {
         switch (option) {
             case 'w' :
 				width = atoi(optarg);
 				break;
 			case 'h' :
 				height = atoi(optarg);
+				break;
+			case 'i' :
+				filename = optarg;
+				image_in=1;
 				break;
 			case 't' :
 				if ( (dt = atof(optarg)) > 10.0e-3 )
@@ -164,8 +280,16 @@ int main(int argc , char *argv[]){
 				return 1;
         }
     }
+	matrice tab,next;
+	if (image_in==1){
+		tab = readImage(filename);
+		next = readImage(filename);
+	} else {
+		tab = buildMatrice(width,height);
+		generate(tab);
+		next = buildMatrice(width,height);	
+	}
 
-	matrice tab = buildMatrice(width,height);
 
    	float d = 1.0/((float)SIZE-1.0) ;
    	float delta = dt/pow(d,2.0) ;
@@ -173,9 +297,8 @@ int main(int argc , char *argv[]){
 	int nbHeatPoints = 1;
 	int *heatPoints = malloc(sizeof(float)*nbHeatPoints);
 
-	generate(tab,heatPoints, nbHeatPoints);	
 
-	matrice next = buildMatrice(width,height);
+
 
 	char str[15];
 	int index = 0;
@@ -189,6 +312,7 @@ int main(int argc , char *argv[]){
 		}
 		if (i==0) 
 			free(tab.map);
+
 		tab = next;
 	}
 	free(tab.map);
